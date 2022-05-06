@@ -1,0 +1,27 @@
+{
+  "type" : "record",
+  "name" : "log_page_view",
+  "fields" :
+  [
+    {
+        "name" : "time",
+        "type" : "string",
+    },
+    {
+        "name" : "browser",
+        "type" : "int",
+    },
+    {
+        "name" : "domain",
+        "type" : "string",
+    },
+    {
+        "name" : "path",
+        "type" : "string",
+    },
+    {
+        "name" : "category",
+        "type" : "string",
+    }
+  ]
+}
