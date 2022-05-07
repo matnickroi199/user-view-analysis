@@ -6,16 +6,19 @@ import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class BuildParquet {
 
     private static final Schema SCHEMA;
     private static final String SCHEMA_LOCATION = "resources/schema.avsc";
-    private static final Path OUT_PATH = new Path("sample.parquet");
+    private static final Path OUT_PATH = new Path("resouces/sample.parquet");
 
     static {
         try {
@@ -26,23 +29,12 @@ public class BuildParquet {
     }
 
     public static void main(String[] args) throws IOException {
-        List<GenericData.Record> sampleData = new ArrayList<>();
-
-        GenericData.Record record = new GenericData.Record(SCHEMA);
-        record.put("c1", 1);
-        record.put("c2", "someString");
-        sampleData.add(record);
-
-        record = new GenericData.Record(SCHEMA);
-        record.put("c1", 2);
-        record.put("c2", "otherString");
-        sampleData.add(record);
-
         BuildParquet writerReader = new BuildParquet();
-        writerReader.writeToParquet(sampleData, OUT_PATH);
+        writerReader.writeToParquet(OUT_PATH);
     }
 
-    public void writeToParquet(List<GenericData.Record> recordsToWrite, Path fileToWrite) throws IOException {
+    public void writeToParquet(Path fileToWrite) throws IOException {
+        List<GenericData.Record> recordsToWrite = parseRawToSchema();
         try (ParquetWriter<GenericData.Record> writer = AvroParquetWriter
                 .<GenericData.Record>builder(fileToWrite)
                 .withSchema(SCHEMA)
@@ -56,4 +48,24 @@ public class BuildParquet {
         }
     }
 
+    public List<GenericData.Record> parseRawToSchema() {
+        List<GenericData.Record> parquet = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader("resources/pt-v-1650007779932.dat"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] s = line.split("\t");
+                GenericData.Record record = new GenericData.Record(SCHEMA);
+                record.put("time", s[0]);
+                record.put("browser", Integer.parseInt(s[2]));
+                record.put("os", Integer.parseInt(s[4]));
+                record.put("domain", s[8]);
+                record.put("path", s[11]);
+                record.put("category", s[23]);
+                parquet.add(record);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return parquet;
+    }
 }

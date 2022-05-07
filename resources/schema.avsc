@@ -5,23 +5,27 @@
   [
     {
         "name" : "time",
-        "type" : "string",
+        "type" : "string"
     },
     {
         "name" : "browser",
-        "type" : "int",
+        "type" : "int"
+    },
+    {
+        "name" : "os",
+        "type" : "int"
     },
     {
         "name" : "domain",
-        "type" : "string",
+        "type" : "string"
     },
     {
         "name" : "path",
-        "type" : "string",
+        "type" : "string"
     },
     {
         "name" : "category",
-        "type" : "string",
+        "type" : "string"
     }
   ]
 }
