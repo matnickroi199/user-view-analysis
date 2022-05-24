@@ -11,14 +11,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class BuildParquet {
 
     private static final Schema SCHEMA;
     private static final String SCHEMA_LOCATION = "resources/schema.avsc";
-    private static final Path OUT_PATH = new Path("resouces/sample.parquet");
+    private static final Path OUT_PATH = new Path("resources/sample.parquet");
 
     static {
         try {
@@ -56,10 +55,12 @@ public class BuildParquet {
                 String[] s = line.split("\t");
                 GenericData.Record record = new GenericData.Record(SCHEMA);
                 record.put("time", s[0]);
-                record.put("browser", Integer.parseInt(s[2]));
-                record.put("os", Integer.parseInt(s[4]));
+                record.put("browser", Utils.IntStr(s[2]));
+                record.put("os", Utils.IntStr(s[4]));
+                record.put("loc", Utils.IntStr(s[7]));
                 record.put("domain", s[8]);
                 record.put("path", s[11]);
+                record.put("guid", Utils.LongStr(s[13].replace("]", "")));
                 record.put("category", s[23]);
                 parquet.add(record);
             }

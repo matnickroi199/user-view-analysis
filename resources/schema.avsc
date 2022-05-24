@@ -16,12 +16,20 @@
         "type" : "int"
     },
     {
+        "name" : "loc",
+        "type" : "int"
+    },
+    {
         "name" : "domain",
         "type" : "string"
     },
     {
         "name" : "path",
         "type" : "string"
+    },
+    {
+        "name" : "guid",
+        "type" : "long"
     },
     {
         "name" : "category",
