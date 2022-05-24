@@ -10,14 +10,23 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class BuildParquet {
 
     private static final Schema SCHEMA;
     private static final String SCHEMA_LOCATION = "resources/schema.avsc";
-    private static final Path OUT_PATH = new Path("resources/sample.parquet");
+    private static final String PC_INPUT_PATH ="/data/ad-pt-v1/";
+    private static final String PC_OUTPUT_PATH = "/data/pageview_pc/";
+    private static final String MB_INPUT_PATH = "/data/ad-pt-mobile/";
+    private static final String MB_OUTPUT_PATH = "/data/pageview_mb/";
 
     static {
         try {
@@ -27,13 +36,56 @@ public class BuildParquet {
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        BuildParquet writerReader = new BuildParquet();
-        writerReader.writeToParquet(OUT_PATH);
+    public static void main(String[] args) {
+        String date;
+        if (args.length > 0) {
+            date = args[0];
+        } else {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            Date current = new Date();
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(current);
+            calendar.add(Calendar.DATE, -1);
+            date = simpleDateFormat.format(calendar.getTime());
+        }
+        System.out.println("Handle log: " + date);
+        BuildParquet builder = new BuildParquet();
+        builder.handle(date, true);
+        builder.handle(date, false);
     }
 
-    public void writeToParquet(Path fileToWrite) throws IOException {
-        List<GenericData.Record> recordsToWrite = parseRawToSchema();
+    public void handle(String date, boolean isPC) {
+        String rawLogPath = (isPC ? PC_INPUT_PATH : MB_INPUT_PATH) + date;
+        String outputPath = (isPC ? PC_OUTPUT_PATH : MB_OUTPUT_PATH) + date;
+        List<String> filesInput = new ArrayList<>();
+        try (Stream<java.nio.file.Path> paths = Files.walk(Paths.get(rawLogPath))) {
+            paths.filter(Files::isRegularFile).forEach(path -> filesInput.add(path.toString()));
+            writeToParquet(outputPath, filesInput);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void writeToParquet(String outputPath, List<String> filesInput) throws IOException {
+        List<GenericData.Record> recordsToWrite = new ArrayList<>();
+        int numFileRead = 0;
+        int numFileWrite = 0;
+        for(String file : filesInput) {
+            recordsToWrite.addAll(parseRawToSchema(file));
+            if(++numFileRead == 100) {
+                numFileRead = 0;
+                numFileWrite++;
+                writeOneFileParquet(recordsToWrite, outputPath+"/"+numFileWrite+".parquet");
+                recordsToWrite.clear();
+            }
+        }
+        if (!recordsToWrite.isEmpty()) {
+            numFileWrite++;
+            writeOneFileParquet(recordsToWrite, outputPath+"/"+numFileWrite+".parquet");
+        }
+    }
+
+    public void writeOneFileParquet(List<GenericData.Record> recordsToWrite, String path) {
+        Path fileToWrite = new Path(path);
         try (ParquetWriter<GenericData.Record> writer = AvroParquetWriter
                 .<GenericData.Record>builder(fileToWrite)
                 .withSchema(SCHEMA)
@@ -44,12 +96,13 @@ public class BuildParquet {
             for (GenericData.Record record : recordsToWrite) {
                 writer.write(record);
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
-
-    public List<GenericData.Record> parseRawToSchema() {
+    public List<GenericData.Record> parseRawToSchema(String path) {
         List<GenericData.Record> parquet = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("resources/pt-v-1650007779932.dat"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] s = line.split("\t");
