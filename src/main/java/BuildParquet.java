@@ -23,10 +23,11 @@ public class BuildParquet {
 
     private static final Schema SCHEMA;
     private static final String SCHEMA_LOCATION = "resources/schema.avsc";
-    private static final String PC_INPUT_PATH ="/data/ad-pt-v1/";
+    private static final String PC_INPUT_PATH ="/ads_log/ad-pt-v1/";
     private static final String PC_OUTPUT_PATH = "/data/pageview_pc/";
-    private static final String MB_INPUT_PATH = "/data/ad-pt-mobile/";
+    private static final String MB_INPUT_PATH = "/ads_log/ad-pt-mobile/";
     private static final String MB_OUTPUT_PATH = "/data/pageview_mb/";
+    private static final Configuration HADOOP_CONFIG;
 
     static {
         try {
@@ -34,6 +35,9 @@ public class BuildParquet {
         } catch (IOException e) {
             throw new RuntimeException("Can't read SCHEMA file from" + SCHEMA_LOCATION, e);
         }
+        HADOOP_CONFIG = new Configuration();
+        HADOOP_CONFIG.set("fs.defaultFS", "hdfs://10.5.92.76:9000");
+        HADOOP_CONFIG.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
     }
 
     public static void main(String[] args) {
@@ -89,7 +93,7 @@ public class BuildParquet {
         try (ParquetWriter<GenericData.Record> writer = AvroParquetWriter
                 .<GenericData.Record>builder(fileToWrite)
                 .withSchema(SCHEMA)
-                .withConf(new Configuration())
+                .withConf(HADOOP_CONFIG)
                 .withCompressionCodec(CompressionCodecName.SNAPPY)
                 .build()) {
 
@@ -106,16 +110,18 @@ public class BuildParquet {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] s = line.split("\t");
-                GenericData.Record record = new GenericData.Record(SCHEMA);
-                record.put("time", s[0]);
-                record.put("browser", Utils.IntStr(s[2]));
-                record.put("os", Utils.IntStr(s[4]));
-                record.put("loc", Utils.IntStr(s[7]));
-                record.put("domain", s[8]);
-                record.put("path", s[11]);
-                record.put("guid", Utils.LongStr(s[13].replace("]", "")));
-                record.put("category", s[23]);
-                parquet.add(record);
+                if (s.length >= 24) {
+                    GenericData.Record record = new GenericData.Record(SCHEMA);
+                    record.put("time", s[0]);
+                    record.put("browser", Utils.IntStr(s[2]));
+                    record.put("os", Utils.IntStr(s[4]));
+                    record.put("loc", Utils.IntStr(s[7]));
+                    record.put("domain", s[8]);
+                    record.put("path", s[11]);
+                    record.put("guid", Utils.LongStr(s[13].replace("]", "")));
+                    record.put("category", s[23]);
+                    parquet.add(record);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
