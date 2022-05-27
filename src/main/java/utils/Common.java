@@ -1,4 +1,6 @@
-public class Utils {
+package utils;
+
+public class Common {
     public static long LongStr(String value) {
         try {
             return Long.parseLong(value);

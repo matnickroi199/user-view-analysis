@@ -5,6 +5,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.parquet.avro.AvroParquetWriter;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
+import utils.Common;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,7 +20,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class BuildParquet {
+public class LogProcessor {
 
     private static final Schema SCHEMA;
     private static final String SCHEMA_LOCATION = "resources/schema.avsc";
@@ -53,9 +54,9 @@ public class BuildParquet {
             date = simpleDateFormat.format(calendar.getTime());
         }
         System.out.println("Handle log: " + date);
-        BuildParquet builder = new BuildParquet();
-        builder.handle(date, true);
-        builder.handle(date, false);
+        LogProcessor processor = new LogProcessor();
+        processor.handle(date, true);
+        processor.handle(date, false);
     }
 
     public void handle(String date, boolean isPC) {
@@ -64,12 +65,12 @@ public class BuildParquet {
         List<String> filesInput = new ArrayList<>();
         try (Stream<java.nio.file.Path> paths = Files.walk(Paths.get(rawLogPath))) {
             paths.filter(Files::isRegularFile).forEach(path -> filesInput.add(path.toString()));
-            writeToParquet(outputPath, filesInput);
+            buildParquet(outputPath, filesInput);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    public void writeToParquet(String outputPath, List<String> filesInput) throws IOException {
+    public void buildParquet(String outputPath, List<String> filesInput) throws IOException {
         List<GenericData.Record> recordsToWrite = new ArrayList<>();
         int numFileRead = 0;
         int numFileWrite = 0;
@@ -78,17 +79,17 @@ public class BuildParquet {
             if(++numFileRead == 100) {
                 numFileRead = 0;
                 numFileWrite++;
-                writeOneFileParquet(recordsToWrite, outputPath+"/"+numFileWrite+".parquet");
+                writeParquetFile(recordsToWrite, outputPath+"/"+numFileWrite+".parquet");
                 recordsToWrite.clear();
             }
         }
         if (!recordsToWrite.isEmpty()) {
             numFileWrite++;
-            writeOneFileParquet(recordsToWrite, outputPath+"/"+numFileWrite+".parquet");
+            writeParquetFile(recordsToWrite, outputPath+"/"+numFileWrite+".parquet");
         }
     }
 
-    public void writeOneFileParquet(List<GenericData.Record> recordsToWrite, String path) {
+    public void writeParquetFile(List<GenericData.Record> recordsToWrite, String path) {
         Path fileToWrite = new Path(path);
         try (ParquetWriter<GenericData.Record> writer = AvroParquetWriter
                 .<GenericData.Record>builder(fileToWrite)
@@ -113,12 +114,12 @@ public class BuildParquet {
                 if (s.length >= 24) {
                     GenericData.Record record = new GenericData.Record(SCHEMA);
                     record.put("time", s[0]);
-                    record.put("browser", Utils.IntStr(s[2]));
-                    record.put("os", Utils.IntStr(s[4]));
-                    record.put("loc", Utils.IntStr(s[7]));
+                    record.put("browser", Common.IntStr(s[2]));
+                    record.put("os", Common.IntStr(s[4]));
+                    record.put("loc", Common.IntStr(s[7]));
                     record.put("domain", s[8]);
                     record.put("path", s[11]);
-                    record.put("guid", Utils.LongStr(s[13].replace("]", "")));
+                    record.put("guid", Common.LongStr(s[13].replace("]", "")));
                     record.put("category", s[23]);
                     parquet.add(record);
                 }
