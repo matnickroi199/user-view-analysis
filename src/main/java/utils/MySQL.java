@@ -1,9 +1,15 @@
 package utils;
 
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.sources.In;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.sql.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MySQL {
     private static volatile Connection conn;
@@ -16,7 +22,7 @@ public class MySQL {
         if (conn == null) {
             synchronized (MySQL.class) {
                 if (conn == null) {
-                    Class.forName("com.mysql.jdbc.Driver");
+                    Class.forName("com.mysql.cj.jdbc.Driver");
                     String url = Config.getProperties().getProperty("mysql.url");;
                     conn = DriverManager.getConnection(url);
                 }
@@ -36,18 +42,12 @@ public class MySQL {
         }
     }
 
-    public void insertToDB(List<Row> data) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement("REPLACE into tbl_bidding values (?,?,?,?,?,?,?,?)");
+    public void insertToDB(Map<Integer, String> map) throws SQLException {
+        PreparedStatement stmt = conn.prepareStatement("replace into location_info values (?,?)");
         int count = 0;
-        for(Row r : data) {
-            stmt.setLong(1, r.getLong(0));
-            stmt.setInt(2, r.getInt(1));
-            stmt.setDouble(3, r.getDouble(2));
-            stmt.setDouble(4, r.getDouble(3));
-            stmt.setDouble(5, r.getDouble(4));
-            stmt.setDouble(6, r.getDouble(5));
-            stmt.setDouble(7, r.getDouble(6));
-            stmt.setDouble(8, r.getDouble(7));
+        for(Integer id : map.keySet()) {
+            stmt.setInt(1, id);
+            stmt.setString(2, map.get(id));
             stmt.addBatch();
             count++;
             if(count == 5000) {
@@ -55,6 +55,24 @@ public class MySQL {
                 count = 0;
             }
         }
-        stmt.executeBatch();
+        if (count > 0) stmt.executeBatch();
+    }
+
+    public static void main(String[] args) {
+        Map<Integer, String> loc = new HashMap<>();
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("/home/thang/IdeaProjects/ip2location_v2/resources/forein_info/oneForAll.txt"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] s = line.split("\\s+", 2);
+                loc.put(Integer.valueOf(s[0]), s[1]);
+            }
+            br.close();
+            MySQL db = new MySQL();
+            db.insertToDB(loc);
+            close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

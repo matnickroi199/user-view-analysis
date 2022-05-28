@@ -14,10 +14,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class LogProcessor {
@@ -43,8 +40,12 @@ public class LogProcessor {
 
     public static void main(String[] args) {
         String date;
+        String device = "";
         if (args.length > 0) {
             date = args[0];
+            if (args.length > 1) {
+                device = args[1].toLowerCase();
+            }
         } else {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date current = new Date();
@@ -55,8 +56,14 @@ public class LogProcessor {
         }
         System.out.println("Handle log: " + date);
         LogProcessor processor = new LogProcessor();
-        processor.handle(date, true);
-        processor.handle(date, false);
+        if ("pc".equals(device)) {
+            processor.handle(date, true);
+        } else if ("mb".equals(device)) {
+            processor.handle(date, false);
+        } else {
+            processor.handle(date, true);
+            processor.handle(date, false);
+        }
     }
 
     public void handle(String date, boolean isPC) {
@@ -65,17 +72,18 @@ public class LogProcessor {
         List<String> filesInput = new ArrayList<>();
         try (Stream<java.nio.file.Path> paths = Files.walk(Paths.get(rawLogPath))) {
             paths.filter(Files::isRegularFile).forEach(path -> filesInput.add(path.toString()));
-            buildParquet(outputPath, filesInput);
+            buildParquet(outputPath, filesInput, isPC);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-    public void buildParquet(String outputPath, List<String> filesInput) throws IOException {
+
+    public void buildParquet(String outputPath, List<String> filesInput, boolean isPC) throws IOException {
         List<GenericData.Record> recordsToWrite = new ArrayList<>();
         int numFileRead = 0;
         int numFileWrite = 0;
         for(String file : filesInput) {
-            recordsToWrite.addAll(parseRawToSchema(file));
+            recordsToWrite.addAll(parseRawToSchema(file, isPC));
             if(++numFileRead == 100) {
                 numFileRead = 0;
                 numFileWrite++;
@@ -105,28 +113,55 @@ public class LogProcessor {
             throw new RuntimeException(e);
         }
     }
-    public List<GenericData.Record> parseRawToSchema(String path) {
+    public List<GenericData.Record> parseRawToSchema(String path, boolean isPC) {
         List<GenericData.Record> parquet = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] s = line.split("\t");
-                if (s.length >= 24) {
-                    GenericData.Record record = new GenericData.Record(SCHEMA);
-                    record.put("time", s[0]);
-                    record.put("browser", Common.IntStr(s[2]));
-                    record.put("os", Common.IntStr(s[4]));
-                    record.put("loc", Common.IntStr(s[7]));
-                    record.put("domain", s[8]);
-                    record.put("path", s[11]);
-                    record.put("guid", Common.LongStr(s[13].replace("]", "")));
-                    record.put("category", s[23]);
-                    parquet.add(record);
+                GenericData.Record record;
+                if (isPC) {
+                    record = extractDataPC(line);
+                } else {
+                    record = extractDataMB(line);
                 }
+                if (record != null) parquet.add(record);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         return parquet;
+    }
+
+    public GenericData.Record extractDataPC(String line) {
+        String[] s = line.split("\t");
+        if (s.length >= 24) {
+            GenericData.Record record = new GenericData.Record(SCHEMA);
+            record.put("time", s[0]);
+            record.put("browser", Common.IntStr(s[2]));
+            record.put("os", Common.IntStr(s[4]));
+            record.put("loc", Common.IntStr(s[7]));
+            record.put("domain", s[8]);
+            record.put("path", s[11]);
+            record.put("guid", Common.LongStr(s[13].replace("]", "")));
+            record.put("category", s[23]);
+            return record;
+        }
+        return null;
+    }
+    public GenericData.Record extractDataMB(String line) {
+        String[] s = line.split("\t");
+        if (s.length >= 23) {
+            GenericData.Record record = new GenericData.Record(SCHEMA);
+            record.put("time", s[0]);
+            record.put("browser", Common.IntStr(s[2]));
+            record.put("os", Common.IntStr(s[4]));
+            record.put("loc", Common.IntStr(s[7]));
+            record.put("domain", s[8]);
+            record.put("path", s[9]);
+            record.put("guid", Common.LongStr(s[11]));
+            record.put("category", s[17]);
+            return record;
+        }
+        return null;
     }
 }
