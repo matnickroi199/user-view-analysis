@@ -42,36 +42,17 @@ public class MySQL {
         }
     }
 
-    public void insertToDB(Map<Integer, String> map) throws SQLException {
-        PreparedStatement stmt = conn.prepareStatement("replace into location_info values (?,?)");
-        int count = 0;
-        for(Integer id : map.keySet()) {
-            stmt.setInt(1, id);
-            stmt.setString(2, map.get(id));
-            stmt.addBatch();
-            count++;
-            if(count == 5000) {
-                stmt.executeBatch();
-                count = 0;
+    public void insertOverview(List<Row> rows, boolean isPC) {
+        String device = isPC ? "PC" : "MB";
+        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO overview (time, device, user, view) values (?,?,?,?)")){
+            for (Row row : rows) {
+                stmt.setString(1, row.getAs("time"));
+                stmt.setString(2, device);
+                stmt.setInt(3, row.getAs("user"));
+                stmt.setInt(4, row.getAs("view"));
+                stmt.execute();
             }
-        }
-        if (count > 0) stmt.executeBatch();
-    }
-
-    public static void main(String[] args) {
-        Map<Integer, String> loc = new HashMap<>();
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("/home/thang/IdeaProjects/ip2location_v2/resources/forein_info/oneForAll.txt"));
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] s = line.split("\\s+", 2);
-                loc.put(Integer.valueOf(s[0]), s[1]);
-            }
-            br.close();
-            MySQL db = new MySQL();
-            db.insertToDB(loc);
-            close();
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
