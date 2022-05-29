@@ -13,7 +13,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -22,9 +21,9 @@ public class LogProcessor {
     private static final Schema SCHEMA;
     private static final String SCHEMA_LOCATION = "resources/schema.avsc";
     private static final String PC_INPUT_PATH ="/ads_log/ad-pt-v1/";
-    private static final String PC_OUTPUT_PATH = "/data/pageview_pc/";
+    public static final String PC_OUTPUT_PATH = "/data/pageview_pc/";
     private static final String MB_INPUT_PATH = "/ads_log/ad-pt-mobile/";
-    private static final String MB_OUTPUT_PATH = "/data/pageview_mb/";
+    public static final String MB_OUTPUT_PATH = "/data/pageview_mb/";
     private static final Configuration HADOOP_CONFIG;
 
     static {
@@ -39,34 +38,20 @@ public class LogProcessor {
     }
 
     public static void main(String[] args) {
-        String date;
-        String device = "";
-        if (args.length > 0) {
-            date = args[0];
-            if (args.length > 1) {
-                device = args[1].toLowerCase();
-            }
-        } else {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            Date current = new Date();
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(current);
-            calendar.add(Calendar.DATE, -1);
-            date = simpleDateFormat.format(calendar.getTime());
-        }
-        System.out.println("Handle log: " + date);
+        Common.Arguments arguments = new Common.Arguments(args);
         LogProcessor processor = new LogProcessor();
-        if ("pc".equals(device)) {
-            processor.handle(date, true);
-        } else if ("mb".equals(device)) {
-            processor.handle(date, false);
+        if ("pc".equals(arguments.device)) {
+            processor.handle(arguments.date, true);
+        } else if ("mb".equals(arguments.device)) {
+            processor.handle(arguments.date, false);
         } else {
-            processor.handle(date, true);
-            processor.handle(date, false);
+            processor.handle(arguments.date, true);
+            processor.handle(arguments.date, false);
         }
     }
 
     public void handle(String date, boolean isPC) {
+        System.out.println("Process log " + (isPC ? "PC" : "MB") + ": " + date);
         String rawLogPath = (isPC ? PC_INPUT_PATH : MB_INPUT_PATH) + date;
         String outputPath = (isPC ? PC_OUTPUT_PATH : MB_OUTPUT_PATH) + date;
         List<String> filesInput = new ArrayList<>();
