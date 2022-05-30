@@ -46,8 +46,70 @@ public class MySQL {
             for (Row row : rows) {
                 stmt.setString(1, row.getAs("date"));
                 stmt.setString(2, device);
-                stmt.setInt(3, row.getAs("user"));
-                stmt.setInt(4, row.getAs("view"));
+                stmt.setLong(3, row.getAs("user"));
+                stmt.setLong(4, row.getAs("view"));
+                stmt.execute();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void insertBrowser(List<Row> rows, boolean isPC) {
+        String device = isPC ? "PC" : "MB";
+        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO browser_analysis (time, browser_id, device, user, view) values (?,?,?,?,?)")){
+            for (Row row : rows) {
+                stmt.setString(1, row.getAs("date"));
+                stmt.setInt(2, row.getAs("browser"));
+                stmt.setString(3, device);
+                stmt.setLong(4, row.getAs("user"));
+                stmt.setLong(5, row.getAs("view"));
+                stmt.execute();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void insertLocation(List<Row> rows) {
+        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO location_analysis (time, loc_id, user, view) values (?,?,?,?)")){
+            for (Row row : rows) {
+                stmt.setString(1, row.getAs("date"));
+                stmt.setInt(2, row.getAs("loc"));
+                stmt.setLong(3, row.getAs("user"));
+                stmt.setLong(4, row.getAs("view"));
+                stmt.execute();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void insertOS(List<Row> rows, boolean isPC) {
+        String device = isPC ? "PC" : "MB";
+        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO os_analysis (time, os_id, device, user, view) values (?,?,?,?,?)")){
+            for (Row row : rows) {
+                stmt.setString(1, row.getAs("date"));
+                stmt.setInt(2, row.getAs("os"));
+                stmt.setString(3, device);
+                stmt.setLong(4, row.getAs("user"));
+                stmt.setLong(5, row.getAs("view"));
+                stmt.execute();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void insertTimeFrame(List<Row> rows, boolean isPC) {
+        String device = isPC ? "PC" : "MB";
+        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO time_frame_analysis (time, frame_id, device, user, view) values (?,?,?,?,?)")){
+            for (Row row : rows) {
+                stmt.setString(1, row.getAs("date"));
+                stmt.setInt(2, row.getAs("hour"));
+                stmt.setString(3, device);
+                stmt.setLong(4, row.getAs("user"));
+                stmt.setLong(5, row.getAs("view"));
                 stmt.execute();
             }
         } catch (SQLException e) {
