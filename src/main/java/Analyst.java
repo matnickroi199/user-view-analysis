@@ -25,7 +25,7 @@ public class Analyst {
     }
 
     public void analyze(String date, boolean isPC) {
-        System.out.println("Analyse log " + (isPC ? "PC" : "MB") + ": " + date);
+        System.out.println("Analyze log " + (isPC ? "PC" : "MB") + ": " + date);
 
         MySQL db = new MySQL();
 
