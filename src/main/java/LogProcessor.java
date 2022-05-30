@@ -41,16 +41,16 @@ public class LogProcessor {
         Common.Arguments arguments = new Common.Arguments(args);
         LogProcessor processor = new LogProcessor();
         if ("pc".equals(arguments.device)) {
-            processor.handle(arguments.date, true);
+            processor.process(arguments.date, true);
         } else if ("mb".equals(arguments.device)) {
-            processor.handle(arguments.date, false);
+            processor.process(arguments.date, false);
         } else {
-            processor.handle(arguments.date, true);
-            processor.handle(arguments.date, false);
+            processor.process(arguments.date, true);
+            processor.process(arguments.date, false);
         }
     }
 
-    public void handle(String date, boolean isPC) {
+    public void process(String date, boolean isPC) {
         System.out.println("Process log " + (isPC ? "PC" : "MB") + ": " + date);
         String rawLogPath = (isPC ? PC_INPUT_PATH : MB_INPUT_PATH) + date;
         String outputPath = (isPC ? PC_OUTPUT_PATH : MB_OUTPUT_PATH) + date;

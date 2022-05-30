@@ -13,17 +13,17 @@ public class Analyst {
         Common.Arguments arguments = new Common.Arguments(args);
         Analyst analyst = new Analyst();
         if ("pc".equals(arguments.device)) {
-            analyst.handle(arguments.date, true);
+            analyst.analyse(arguments.date, true);
         } else if ("mb".equals(arguments.device)) {
-            analyst.handle(arguments.date, false);
+            analyst.analyse(arguments.date, false);
         } else {
-            analyst.handle(arguments.date, true);
-            analyst.handle(arguments.date, false);
+            analyst.analyse(arguments.date, true);
+            analyst.analyse(arguments.date, false);
         }
     }
 
-    public void handle(String date, boolean isPC) {
-        System.out.println("Analysis log " + (isPC ? "PC" : "MB") + ": " + date);
+    public void analyse(String date, boolean isPC) {
+        System.out.println("Analyse log " + (isPC ? "PC" : "MB") + ": " + date);
 
         MySQL db = new MySQL();
 
