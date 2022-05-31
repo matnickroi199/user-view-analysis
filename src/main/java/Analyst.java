@@ -32,7 +32,6 @@ public class Analyst {
         SparkSession spark = Spark.getSession("user-view-analysis");
         String pathLog = HDFS + (isPC ? LogProcessor.PC_OUTPUT_PATH : LogProcessor.MB_OUTPUT_PATH) + date;
         Dataset<Row> df = spark.read().parquet(pathLog).select(split(col("time")," ").getItem(0).as("date"), col("*"));
-        df.persist();
 
         List<Row> resultOV = overview(df);
         db.insertOverview(resultOV, isPC);
@@ -51,7 +50,6 @@ public class Analyst {
             db.insertLocation(resultLocation);
         }
 
-        df.unpersist();
         MySQL.close();
     }
 
