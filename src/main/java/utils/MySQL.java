@@ -116,4 +116,36 @@ public class MySQL {
             e.printStackTrace();
         }
     }
+
+    public void insertGender(List<Row> rows, boolean isPC) {
+        String device = isPC ? "PC" : "MB";
+        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO gender_analysis (time, gender, device, user, view) values (?,?,?,?,?)")){
+            for (Row row : rows) {
+                stmt.setString(1, row.getAs("date"));
+                stmt.setInt(2, row.getAs("gender"));
+                stmt.setString(3, device);
+                stmt.setLong(4, row.getAs("user"));
+                stmt.setLong(5, row.getAs("view"));
+                stmt.execute();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void insertAge(List<Row> rows, boolean isPC) {
+        String device = isPC ? "PC" : "MB";
+        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO age_analysis (time, age, device, user, view) values (?,?,?,?,?)")){
+            for (Row row : rows) {
+                stmt.setString(1, row.getAs("date"));
+                stmt.setInt(2, row.getAs("age"));
+                stmt.setString(3, device);
+                stmt.setLong(4, row.getAs("user"));
+                stmt.setLong(5, row.getAs("view"));
+                stmt.execute();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

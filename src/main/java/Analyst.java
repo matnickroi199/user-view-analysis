@@ -8,7 +8,6 @@ import utils.Spark;
 import java.util.List;
 
 import static org.apache.spark.sql.functions.*;
-import static utils.Spark.HDFS;
 
 public class Analyst {
     public static void main(String[] args) {
@@ -30,7 +29,7 @@ public class Analyst {
         MySQL db = new MySQL();
 
         SparkSession spark = Spark.getSession("user-view-analysis");
-        String pathLog = HDFS + (isPC ? LogProcessor.PC_OUTPUT_PATH : LogProcessor.MB_OUTPUT_PATH) + date;
+        String pathLog = Spark.HDFS_9276 + (isPC ? LogProcessor.PC_OUTPUT_PATH : LogProcessor.MB_OUTPUT_PATH) + date;
         Dataset<Row> df = spark.read().parquet(pathLog).select(split(col("time")," ").getItem(0).as("date"), col("*"));
 
         List<Row> resultOV = overview(df);
@@ -75,7 +74,7 @@ public class Analyst {
     }
 
     public List<Row> location(SparkSession spark, String date, Dataset<Row> df) {
-        String logMB = HDFS + LogProcessor.MB_OUTPUT_PATH + date;
+        String logMB = Spark.HDFS_9276 + LogProcessor.MB_OUTPUT_PATH + date;
         Dataset<Row> pc = df.filter("loc != -1").select("date", "loc", "guid");
         Dataset<Row> mb = spark.read().parquet(logMB).filter("loc != -1").select(split(col("time")," ").getItem(0).as("date"), col("loc"), col("guid"));
         return pc.union(mb).groupBy("date", "loc").agg(count("guid").as("view"), countDistinct("guid").as("user"))

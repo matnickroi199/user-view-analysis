@@ -1,1 +1,2 @@
 spark-submit --master yarn --class Analyst user-view-analysis-1.0-SNAPSHOT-jar-with-dependencies.jar
+/opt/spark/bin/spark-submit --master yarn --keytab /home/thangpd/thangpd.keytab --queue datamining --principal thangpd/platform@HADOOP.SECURE --class Demographics user-view-analysis-1.0-SNAPSHOT-jar-with-dependencies.jar
