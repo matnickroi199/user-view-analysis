@@ -13,7 +13,6 @@ public class Spark {
                         sparkSession = SparkSession
                                 .builder()
                                 .appName(appName)
-                                .config("spark.master", "local[*]")
                                 .config("spark.sql.parquet.binaryAsString", "true")
                                 .config("spark.sql.files.ignoreCorruptFiles", "true")
                                 .config("spark.yarn.access.hadoopFileSystems", HDFS)

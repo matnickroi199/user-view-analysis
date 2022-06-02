@@ -1,0 +1,1 @@
+spark-submit --master yarn target/tbl_bidding-1.0-jar-with-dependencies.jar
