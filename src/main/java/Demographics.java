@@ -12,14 +12,14 @@ import static org.apache.spark.sql.functions.*;
 public class Demographics {
     public static void main(String[] args) {
         Common.Arguments arguments = new Common.Arguments(args);
-        Demographics analyst = new Demographics();
+        Demographics demographics = new Demographics();
         if ("pc".equals(arguments.device)) {
-            analyst.analyze(arguments.date, true);
+            demographics.analyze(arguments.date, true);
         } else if ("mb".equals(arguments.device)) {
-            analyst.analyze(arguments.date, false);
+            demographics.analyze(arguments.date, false);
         } else {
-            analyst.analyze(arguments.date, true);
-            analyst.analyze(arguments.date, false);
+            demographics.analyze(arguments.date, true);
+            demographics.analyze(arguments.date, false);
         }
     }
     public void analyze(String date, boolean isPC) {
@@ -29,8 +29,8 @@ public class Demographics {
 
         SparkSession spark = Spark.getSession("user-view-analysis");
         String pathLogDemo = Spark.HDFS_23202 + (isPC ? Spark.DemoPC : Spark.DemoMB) + date;
-        Dataset<Row> dfDemo = spark.read().parquet(pathLogDemo).
-                select(split(col("dt")," ").getItem(0).as("date"), col("age"), col("gender")).filter("age != -1");
+        Dataset<Row> dfDemo = spark.read().parquet(pathLogDemo).filter("age != -1")
+                .select(split(col("dt")," ").getItem(0).as("date"), col("*"));
 
         List<Row> resultAge = age(dfDemo);
         db.insertAge(resultAge, isPC);
