@@ -1,1 +1,1 @@
-spark-submit --master yarn tbl_bidding-1.0-jar-with-dependencies.jar
+spark-submit --master yarn --class Analyst user-view-analysis-1.0-SNAPSHOT-jar-with-dependencies.jar
