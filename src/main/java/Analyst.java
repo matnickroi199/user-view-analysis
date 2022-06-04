@@ -53,7 +53,7 @@ public class Analyst {
     }
 
     public List<Row> overview(Dataset<Row> df) {
-        return df.groupBy("date").agg(count("guid").as("view"), countDistinct("guid").as("user"))
+        return df.select(substring(col("time"), 1, 13).as("hour"), col("guid")).groupBy("hour").agg(count("guid").as("view"), countDistinct("guid").as("user"))
                 .collectAsList();
     }
 

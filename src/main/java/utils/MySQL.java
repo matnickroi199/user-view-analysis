@@ -44,7 +44,7 @@ public class MySQL {
         String device = isPC ? "PC" : "MB";
         try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO overview (time, device, user, view) values (?,?,?,?)")){
             for (Row row : rows) {
-                stmt.setString(1, row.getAs("date"));
+                stmt.setString(1, row.getAs("hour"));
                 stmt.setString(2, device);
                 stmt.setLong(3, row.getAs("user"));
                 stmt.setLong(4, row.getAs("view"));
