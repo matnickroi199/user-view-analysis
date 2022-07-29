@@ -42,12 +42,14 @@ public class Demographics {
     }
 
     public List<Row> age(Dataset<Row> df) {
-        return df.groupBy("date", "age").agg(count("guid").as("view"), countDistinct("guid").as("user"))
+        return df.groupBy("date", "age")
+                .agg(count("guid").as("view"), countDistinct("guid").as("user"))
                 .collectAsList();
     }
 
     public List<Row> gender(Dataset<Row> df) {
-        return df.groupBy("date", "gender").agg(count("guid").as("view"), countDistinct("guid").as("user"))
+        return df.groupBy("date", "gender")
+                .agg(count("guid").as("view"), countDistinct("guid").as("user"))
                 .collectAsList();
     }
 }

@@ -53,31 +53,39 @@ public class Analyst {
     }
 
     public List<Row> overview(Dataset<Row> df) {
-        return df.select(substring(col("time"), 1, 13).as("hour"), col("guid")).groupBy("hour").agg(count("guid").as("view"), countDistinct("guid").as("user"))
+        return df.select(substring(col("time"), 1, 13).as("hour"), col("guid"))
+                .groupBy("hour")
+                .agg(count("guid").as("view"), countDistinct("guid").as("user"))
                 .collectAsList();
     }
 
     public List<Row> browser(Dataset<Row> df) {
-        return df.groupBy("date", "browser").agg(count("guid").as("view"), countDistinct("guid").as("user"))
+        return df.groupBy("date", "browser")
+                .agg(count("guid").as("view"), countDistinct("guid").as("user"))
                 .collectAsList();
     }
 
     public List<Row> os(Dataset<Row> df) {
-        return df.groupBy("date", "os").agg(count("guid").as("view"), countDistinct("guid").as("user"))
+        return df.groupBy("date", "os")
+                .agg(count("guid").as("view"), countDistinct("guid").as("user"))
                 .collectAsList();
     }
 
     public List<Row> timeframe(Dataset<Row> df) {
         return df.select(col("date"), substring(col("time"), 12, 2).cast("int").as("hour"), col("guid"))
-                .groupBy("date", "hour").agg(count("guid").as("view"), countDistinct("guid").as("user"))
+                .groupBy("date", "hour")
+                .agg(count("guid").as("view"), countDistinct("guid").as("user"))
                 .collectAsList();
     }
 
     public List<Row> location(SparkSession spark, String date, Dataset<Row> df) {
         String logMB = Spark.HDFS_9276 + LogProcessor.MB_OUTPUT_PATH + date;
         Dataset<Row> pc = df.filter("loc != -1").select("date", "loc", "guid");
-        Dataset<Row> mb = spark.read().parquet(logMB).filter("loc != -1").select(split(col("time")," ").getItem(0).as("date"), col("loc"), col("guid"));
-        return pc.union(mb).groupBy("date", "loc").agg(count("guid").as("view"), countDistinct("guid").as("user"))
+        Dataset<Row> mb = spark.read().parquet(logMB)
+                .filter("loc != -1")
+                .select(split(col("time")," ").getItem(0).as("date"), col("loc"), col("guid"));
+        return pc.union(mb).groupBy("date", "loc")
+                .agg(count("guid").as("view"), countDistinct("guid").as("user"))
                 .collectAsList();
     }
 }
